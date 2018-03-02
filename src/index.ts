@@ -5,6 +5,7 @@ import * as jws from 'jws';
 import * as mime from 'mime';
 import * as pify from 'pify';
 import * as querystring from 'querystring';
+import { Agent } from "https";
 
 const readFile = pify(fs.readFile);
 
@@ -29,6 +30,7 @@ export interface TokenOptions {
   sub?: string;
   scope?: string|string[];
   additionalClaims?: {};
+  agent?: Agent;
 }
 
 class ErrorWithCode extends Error {
@@ -49,6 +51,7 @@ export class GoogleToken {
   tokenExpires: number|null = null;
   email?: string;
   additionalClaims?: {};
+  agent?: Agent;
 
   /**
    * Create a GoogleToken.
@@ -164,7 +167,9 @@ export class GoogleToken {
     if (!this.token) {
       throw new Error('No token to revoke.');
     }
-    return axios.get(GOOGLE_REVOKE_TOKEN_URL + this.token).then(r => {
+    return axios.get(GOOGLE_REVOKE_TOKEN_URL + this.token, {
+      httpsAgent: this.agent
+    }).then(r => {
       this.configure({
         email: this.iss,
         sub: this.sub,
@@ -188,6 +193,10 @@ export class GoogleToken {
     this.iss = options.email || options.iss;
     this.sub = options.sub;
     this.additionalClaims = options.additionalClaims;
+
+    if (options.agent) {
+      this.agent = options.agent;
+    }
 
     if (typeof options.scope === 'object') {
       this.scope = options.scope.join(' ');
@@ -221,6 +230,7 @@ export class GoogleToken {
                grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
                assertion: signedJWT
              }),
+             httpsAgent: this.agent,
              headers: {'Content-Type': 'application/x-www-form-urlencoded'}
            })
         .then(r => {

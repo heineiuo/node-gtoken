@@ -94,6 +94,7 @@ const gtoken = new GoogleToken({
 - `options.sub`: The email address of the user requesting delegated access.
 - `options.keyFile`: The filename of `.json` key, `.pem` key or `.p12` key.
 - `options.key`: The raw RSA private key value, in place of using `options.keyFile`.
+- `options.agent`: A `https.Agent` object, access through the proxy server.
 
 ### .getToken(callback)
 
